@@ -10,4 +10,7 @@ Web View:
 
 Pinout for Reference
 
-![Pinout]()
+![Pinout](Assets\picow-pinout.png)
+
+
+![breadboar]()

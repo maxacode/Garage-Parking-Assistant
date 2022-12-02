@@ -15,6 +15,7 @@ text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}
 <h1> Green Light - Just Right</h1>
 <center> <button class="buttonGreen" name="justrightAdd" value="Add" type="submit">Add 5</button>
 <button class="buttonRed" name="justrightMinus" value="Minus" type="submit">Subtract 5</button>
+<input type="number" id="justrightInput" name="quantity" min="1" max="500">
 </form>
 <br><br>
 <form><center>

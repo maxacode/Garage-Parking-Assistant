@@ -6,22 +6,56 @@ from machine import Pin
 import utime
 import network, socket
 
-triggerPin = 14
-echoPin = 15
-bluePin = 19
+versionNumber = 1.7
+
+triggerPin = 27
+echoPin = 26
 greenPin =20
 redPin= 21
 
 
 trigger = Pin(triggerPin, Pin.OUT)
 echo = Pin(echoPin, Pin.IN)
-tofar = Pin(bluePin, Pin.OUT)
 justright = Pin(greenPin, Pin.OUT)
 toclose = Pin(redPin, Pin.OUT)
 
 red = "toclose"
 green = "justright"
-blue = "tofar"
+ 
+
+import website
+
+html = website.html
+
+
+
+import connectToWlan
+
+ssid = 'Tell My Wi-Fi Love Her'
+password = 'GodIsGood!'
+
+ipInfo= connectToWlan.connectWLAN(ssid, password)
+print(ipInfo)
+
+from machine import Pin, I2C
+from ssd1306 import SSD1306_I2C
+import framebuf
+import time
+
+WIDTH = 128
+HEIGHT = 32
+
+sclPin = 17
+sdaPin = 16
+
+
+i2c = I2C(0, scl = Pin(sclPin), sda = Pin(sdaPin), freq=400000)
+
+display = SSD1306_I2C(WIDTH, HEIGHT, i2c)
+display.text(f"WiFi Network: ", 0, 0)
+display.text(ssid, 0, 10)
+display.text("5 Seconds Only", 0, 20)
+display.show()
 
 # Distance varaibles
 global justrightcm, toclosecm, tofarcm
@@ -46,24 +80,59 @@ getConfigs()
 
 justright.value(1)
 toclose.value(1)
-tofar.value(1)
-
-
-import website
-
-html = website.html
 
 
 
-import connectToWlan
-
-ssid = 'Tell My Wi-Fi Love Her'
-password = 'GodIsGood!'
-
-ipInfo= connectToWlan.connectWLAN(ssid, password)
-print(ipInfo)
 
 
+#display.invert(1)
+#display.contrast(100)
+
+#display.fill(1)
+#display.show()
+
+# def read_temp():
+#     sensor_temp = machine.ADC(4)
+#     conversion_factor = 3.3 / (65535)
+#     reading = sensor_temp.read_u16() * conversion_factor 
+#     temperature = 27 - (reading - 0.706)/0.001721
+#     formatted_temperature = "{:.1f}".format(temperature)
+#     string_temperature = str("Temperature:" + formatted_temperature)
+#     print(string_temperature)
+#     time.sleep(2)
+#     return string_temperature
+
+
+def showDisplay():
+    try:
+        #while True:+=\
+        print("showing display")
+        display.fill(0)
+
+        display.text('Grg Prk Asst',0,0)
+        # temperature = read_temp()
+        ipAddr = ipInfo.split(",")[0][7:-1]
+        display.text(ipAddr,0,9)
+        #display.text("test123456789abc",0,18)
+        #display.text("test2",0,24)
+        display.text(f"JR {justrightcm} TF{tofarcm} TC{toclosecm}", 0, 17)
+        display.text(f"{distance} cm",0,25)
+
+        display.show()
+        # display.fill(0)
+    except:
+        pass
+        
+    
+
+    
+
+  
+    
+
+
+    
+#utime.sleep(3)
 
  
 # Open socket
@@ -81,16 +150,27 @@ while True:
         s.listen(50)
         print('listening on', addr)
                  
-     
+        display.fill(0)
+        display.text("Connection Est", 0,10)
+        display.text(str(versionNumber),0,20)
+        display.show()
+        
         break
     except Exception as e:
         print(f"except 68: {e}")
-        utime.sleep_us(5)
+        display.fill(0)
+        display.text(f"Excep 68: {e}", 0, 10)
+        display.text("Please Reboot", 0, 20)
+        display.show()
+
+        utime.sleep(2)
         pass
+    
+
 
 def openSocket():
     global justrightcm, tofarcm, toclosecm
-
+    print("opensocket started")
     # Listen for connections, serve client
     while True:
     
@@ -106,11 +186,7 @@ def openSocket():
         request = str(request)
         
         
-       # led_on = request.find('led=on')
-       # led_off = request.find('led=off')
-        
-        #print( 'led on = ' + str(led_on))
-       # print( 'led off = ' + str(led_off))
+ 
        
         if "justrightAdd" in request:
             print("justrightAdd")
@@ -125,7 +201,7 @@ def openSocket():
         if "tofarAdd" in request:
             print("tofarAdd")
             tofarcm += 5
-            print(tofar)
+            print(tofarcm)
             
         elif "tofarMinus" in request:
             print("tofarMinus")
@@ -147,10 +223,18 @@ def openSocket():
     tofarcm={tofarcm}
     toclosecm={toclosecm}
     """
+        display.fill(0)
+        display.text(f"justrightcm={justrightcm}", 0, 0)
+        display.text(f"tofarcm={tofarcm}", 0, 9)
+        display.text(f"toclosecm={toclosecm}", 0, 16)
+        display.text(f"{addr}[3:-3]", 0,25)
+        display.show()
+        
         print(newConfig)
-        with open('config.ini', 'w') as data:
+        with open('config.py', 'w') as data:
             data.write(newConfig)
         
+         
         #getConfigs()
             
         #ledState = "LED is OFF" if led.value() == 0 else "LED is ON" # a compact if-else statement
@@ -172,27 +256,27 @@ def openSocket():
 def ultra():
     
 
-   #print("ultra start")
+    print("ultra start")
     while True:
         justright.value(1)
         toclose.value(1)
-        tofar.value(1)
-        
+
+        global distance
         trigger.low()
         utime.sleep_us(2)
         trigger.high()
         utime.sleep_us(5)
         trigger.low()
-       # print(echo.value())
-       # print(trigger.value())
+        print(echo.value())
+        print(trigger.value())
         while echo.value() == 0:
            signaloff = utime.ticks_us()
-           #print(signaloff)
+           
         while echo.value() == 1:
            signalon = utime.ticks_us()
-          # print(signalon)d
+           
         timepassed = signalon - signaloff
-       # print(timepassed)
+        print(timepassed)
         distance = (timepassed * 0.0343) / 2
         
         #chanign folor of LED based on distancec
@@ -200,31 +284,33 @@ def ultra():
             print("TOOO CLOSE")
             justright.value(0)
             toclose.value(1)
-            tofar.value(0)
+            
         elif distance <= justrightcm:
             print("just right")
             justright.value(1)
             toclose.value(0)
-            tofar.value(0)
+            
         elif distance <= tofarcm:
             print("to Far")
-            justright.value(0)
-            toclose.value(0)
-            tofar.value(1)
+            justright.value(1)
+            toclose.value(1)
+             
         global distanceOutput
         distanceOutput =  f"The distance from object is {distance} cm"
+        showDisplay()
         print(distanceOutput)
-        utime.sleep(.5)
+        utime.sleep(1)
         #openSocket()
         #print(ipInfo)
          
          
 #while True:
-utime.sleep(2)
+#utime.sleep(2)
 #openSocket_thread = _thread.start_new_thread(openSocket, ())
+print('starting ultra thread')
 ultra_thread = _thread.start_new_thread(ultra, ())
-openSocket()
-     
+print("starting openSocket function")
+openSocket()  
 
 
 
@@ -236,3 +322,4 @@ openSocket()
 #    utime.sleep(1)
    
 print("end")
+

@@ -4,7 +4,7 @@ Parking assistant with Raspberry Pi Pico W, Ultrasonic Sensors and web Control
 
 Web View:
 
-![Website](Assets\webpage.png)
+![Website](https://github.com/maxacode/Garage-Parking-Assistant/blob/main/Assets/webpage.png)
 
 
 

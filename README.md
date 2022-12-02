@@ -10,7 +10,7 @@ Web View:
 
 Pinout for Reference
 
-![Pinout](Assets\picow-pinout.png)
+![Pinout](https://github.com/maxacode/Garage-Parking-Assistant/blob/main/Assets/picow-pinout.png)
 
 
-![breadboar]()
+![breadboard](https://github.com/maxacode/Garage-Parking-Assistant/blob/main/Assets/IMG_8328.HEIC)

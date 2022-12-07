@@ -1,5 +1,5 @@
 #ULTRASONIC GARAGE PARKING ASSISTANT
-
+# Tesla
 
 import _thread
 from machine import Pin
@@ -8,14 +8,18 @@ import network, socket
 
 versionNumber = 1.7
 
-triggerPin = 27
-echoPin = 26
-greenPin =20
-redPin= 21
+#triggerPin = 8
+#echoPin = 9
+greenPin = 27
+redPin= 28
+bluePin = 26
+withDisplay = False
+
+global justright, toclose
+#trigger = Pin(triggerPin, Pin.OUT)
+#echo = Pin(echoPin, Pin.IN)
 
 
-trigger = Pin(triggerPin, Pin.OUT)
-echo = Pin(echoPin, Pin.IN)
 justright = Pin(greenPin, Pin.OUT)
 toclose = Pin(redPin, Pin.OUT)
 
@@ -37,25 +41,29 @@ password = 'GodIsGood!'
 ipInfo= connectToWlan.connectWLAN(ssid, password)
 print(ipInfo)
 
-from machine import Pin, I2C
-from ssd1306 import SSD1306_I2C
-import framebuf
+from machine import Pin
+
+if withDisplay:
+    from machine import I2C
+    from ssd1306 import SSD1306_I2C
+    import framebuf
+    WIDTH = 128
+    HEIGHT = 32
+    sclPin = 17
+    sdaPin = 16
+    i2c = I2C(0, scl = Pin(sclPin), sda = Pin(sdaPin), freq=400000)
+    display = SSD1306_I2C(WIDTH, HEIGHT, i2c)
+    display.text(f"WiFi Network: ", 0, 0)
+    display.text(ssid, 0, 10)
+    display.text("5 Seconds Only", 0, 20)
+    display.show()
+        
+
 import time
 
-WIDTH = 128
-HEIGHT = 32
-
-sclPin = 17
-sdaPin = 16
 
 
-i2c = I2C(0, scl = Pin(sclPin), sda = Pin(sdaPin), freq=400000)
 
-display = SSD1306_I2C(WIDTH, HEIGHT, i2c)
-display.text(f"WiFi Network: ", 0, 0)
-display.text(ssid, 0, 10)
-display.text("5 Seconds Only", 0, 20)
-display.show()
 
 # Distance varaibles
 global justrightcm, toclosecm, tofarcm
@@ -84,24 +92,7 @@ toclose.value(1)
 
 
 
-
-#display.invert(1)
-#display.contrast(100)
-
-#display.fill(1)
-#display.show()
-
-# def read_temp():
-#     sensor_temp = machine.ADC(4)
-#     conversion_factor = 3.3 / (65535)
-#     reading = sensor_temp.read_u16() * conversion_factor 
-#     temperature = 27 - (reading - 0.706)/0.001721
-#     formatted_temperature = "{:.1f}".format(temperature)
-#     string_temperature = str("Temperature:" + formatted_temperature)
-#     print(string_temperature)
-#     time.sleep(2)
-#     return string_temperature
-
+ 
 
 def showDisplay():
     try:
@@ -149,21 +140,23 @@ while True:
        # print(59)
         s.listen(50)
         print('listening on', addr)
-                 
-        display.fill(0)
-        display.text("Connection Est", 0,10)
-        display.text(str(versionNumber),0,20)
-        display.show()
+        if withDisplay:
+            display.fill(0)
+            display.text("Connection Est", 0,10)
+            display.text(str(versionNumber),0,20)
+            display.show()
         
         break
     except Exception as e:
         print(f"except 68: {e}")
-        display.fill(0)
-        display.text(f"Excep 68: {e}", 0, 10)
-        display.text("Please Reboot", 0, 20)
-        display.show()
+        if withDisplay:
 
-        utime.sleep(2)
+            display.fill(0)
+            display.text(f"Excep 68: {e}", 0, 10)
+            display.text("Please Reboot", 0, 20)
+            display.show()
+
+        utime.sleep(.1)
         pass
     
 
@@ -223,12 +216,14 @@ def openSocket():
     tofarcm={tofarcm}
     toclosecm={toclosecm}
     """
-        display.fill(0)
-        display.text(f"justrightcm={justrightcm}", 0, 0)
-        display.text(f"tofarcm={tofarcm}", 0, 9)
-        display.text(f"toclosecm={toclosecm}", 0, 16)
-        display.text(f"{addr}[3:-3]", 0,25)
-        display.show()
+        if withDisplay:
+
+            display.fill(0)
+            display.text(f"justrightcm={justrightcm}", 0, 0)
+            display.text(f"tofarcm={tofarcm}", 0, 9)
+            display.text(f"toclosecm={toclosecm}", 0, 16)
+            display.text(f"{addr}[3:-3]", 0,25)
+            display.show()
         
         print(newConfig)
         with open('config.py', 'w') as data:
@@ -253,31 +248,50 @@ def openSocket():
 
 
 
-def ultra():
+def ultra(justright, toclose, utime, withDisplay):
     
 
     print("ultra start")
+    
+    from hcsr04 import HCSR04
+
+    sensor = HCSR04(trigger_pin=8, echo_pin=9)
+
+
     while True:
-        justright.value(1)
-        toclose.value(1)
+        #global justright, toclose
+        #justright.value(1)
+        #toclose.value(1)
 
         global distance
-        trigger.low()
-        utime.sleep_us(2)
-        trigger.high()
-        utime.sleep_us(5)
-        trigger.low()
-        print(echo.value())
-        print(trigger.value())
-        while echo.value() == 0:
-           signaloff = utime.ticks_us()
-           
-        while echo.value() == 1:
-           signalon = utime.ticks_us()
-           
-        timepassed = signalon - signaloff
-        print(timepassed)
-        distance = (timepassed * 0.0343) / 2
+       # trigger.low()
+       # utime.sleep_us(2)
+       # trigger.high()
+       # utime.sleep_us(5)
+       # trigger.low()
+        # print(echo.value())
+        # print(trigger.value())
+       
+        # try:
+        print("Trying sensor")
+       # while echo.value() == 0:
+        #    signaloff = utime.ticks_us()
+    
+       # while echo.value() == 1:
+        #    signalon = utime.ticks_us()
+    #
+       # timepassed = signalon - signaloff
+        #distance = (timepassed * 0.0343) / 2
+
+        distance = sensor.distance_cm()
+
+        print('Distance:', distance, 'cm')
+        #print(f"Distance: {distance}")
+            #break
+        # except Exception as E:
+        #     print(f"---\n {E} --- \n No connection to UltraSonic Sensor - Trying again in 2 Seconds")
+        #     utime.sleep(1)
+            
         
         #chanign folor of LED based on distancec
         if distance <= toclosecm:
@@ -294,21 +308,27 @@ def ultra():
             print("to Far")
             justright.value(1)
             toclose.value(1)
-             
+            
         global distanceOutput
         distanceOutput =  f"The distance from object is {distance} cm"
-        showDisplay()
+        if withDisplay:
+            showDisplay()
+            
         print(distanceOutput)
         utime.sleep(1)
+        #continue
         #openSocket()
         #print(ipInfo)
+
+            
          
          
 #while True:
 #utime.sleep(2)
 #openSocket_thread = _thread.start_new_thread(openSocket, ())
 print('starting ultra thread')
-ultra_thread = _thread.start_new_thread(ultra, ())
+ultra_thread = _thread.start_new_thread(ultra, (justright, toclose, utime, withDisplay))
+utime.sleep(4)
 print("starting openSocket function")
 openSocket()  
 
@@ -322,4 +342,5 @@ openSocket()
 #    utime.sleep(1)
    
 print("end")
+
 
